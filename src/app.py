@@ -1,5 +1,5 @@
 from flask import Flask
-from src.routes import routes, invoicing_routes
+from src.routes import routes
 
 class Aplication():
 

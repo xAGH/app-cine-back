@@ -25,10 +25,11 @@ class InvoicingController(MethodView):
         if request.is_json:
 
             try:
-                tickets = request.json['tickets']
-                products = request.json['products']
-                ticket_code = tickets.get("tickets")[0].get("code")
-                ticket_amount = tickets.get("tickets")[0].get("amount")
+                tickets = list(request.json['tickets'])
+                products = list(request.json['products'])
+                print(tickets)
+                ticket_code = tickets[0].get("code")
+                ticket_amount = tickets[0].get("amount")
                 ticket_price = float(self.model.fetch_one("SELECT price FROM ticket WHERE code = %s", (ticket_code, ))[0])
                 tickets_value = ticket_amount * ticket_price
                 date_time = str(datetime.now())[0:-7]
@@ -55,28 +56,19 @@ class InvoicingController(MethodView):
                 self.model.execute_query(f"""UPDATE invoices SET total_value = {products_price + tickets_value}
                 WHERE code = {no_invoice} """)
 
-            response = make_response()
+                response = make_response(jsonify({
+                    "resposne": {
+                        "statuscode": 201,
+                        "message": "Invoice created successfully"
+                    }
+                }), 201)
 
 
             except Exception as e:
-                message = """Send me a structure like this:
-                                    {
-                                        "tickets": [
-                                            {
-                                                "code": "value",
-                                                "amount":value
-                                            }
-                                        ],  
-                                        "products": [
-                                            {
-                                                "code":"value", 
-                                                "amount":value
-                                            }
-                                        ]
-                                    }"""
+                message = e
                 response = make_response(jsonify({
                     "statuscode": 400,
-                    "message": message
+                    "message": e
                 }))
         
         return response
