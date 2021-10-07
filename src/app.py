@@ -10,4 +10,6 @@ class Aplication():
         self.__register_routes()
 
     def __register_routes(self):
-        self.app.add_url_rule(routes[""], view_func=routes[""])
+        self.app.add_url_rule(routes["index"], view_func=routes["index_controller"])
+        self.app.add_url_rule(routes["tickets"], view_func=routes["tickets_controller"])
+        self.app.add_url_rule(routes["products"], view_func=routes["products_controller"])

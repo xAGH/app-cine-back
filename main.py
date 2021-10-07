@@ -1,8 +1,7 @@
-from src.app import Application
+from src.app import Aplication
 
 def main():
-    app = Application()
-    app.run(host="localhost", port=4000, debug=True, load_dotenv=True)
+    Aplication().app.run(host="localhost", port=4000, debug=True, load_dotenv=True)
 
 if __name__ == '__main__':
     main()
