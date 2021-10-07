@@ -1,40 +1,84 @@
 from flask import request, make_response, jsonify
 from flask.views import MethodView
 from src.models import Model
+from datetime import datetime
 
 class InvoicingController(MethodView):
 
     def __init__(self) -> None:
         self.model = Model()
 
+    def query(self):
+        pass
+
     def get(self):
         pass
 
     def post(self):
-        if request.is_json:
-            #product_price = float(request.json['product_price'])
-            #no_products = int(request.json['no_products'])
-            #products_value = (product_price * no_products)
-            products = request.json['products']
-            try:
-                if len(products) > 1:
-                    for product in products:
-                        print(product)
-                print(products)
-                return "Success"
-            except Exception as e:
-                return make_response(jsonify({
-                    "response": {
-                        "statusCode": 400,
-                        "error": f"{e}"                
-                    }
-                }), 400)
         response = make_response(jsonify({
             "response": {
                 "statusCode": 401,
                 "error": "Invalid request"
             }
         }), 401)
+
+        if request.is_json:
+
+            try:
+                tickets = request.json['tickets']
+                products = request.json['products']
+                ticket_code = tickets.get("tickets")[0].get("code")
+                ticket_amount = tickets.get("tickets")[0].get("amount")
+                ticket_price = float(self.model.fetch_one("SELECT price FROM ticket WHERE code = %s", (ticket_code, ))[0])
+                tickets_value = ticket_amount * ticket_price
+                date_time = str(datetime.now())[0:-7]
+
+                self.model.execute_query("""INSERT INTO invoices(ticket, ticket_price, no_tickets, 
+                tickets_value, date_time) VALUES('{}', {}, {}, {}, 
+                {})""".format(ticket_code, ticket_price, ticket_amount, tickets_value, date_time))
+
+                no_invoice = self.model.fetch_one("SELECT code FROM invoices ORDER BY code DESC")
+
+                for product in products:
+                    product_code = products[product].get("code")
+                    product_amount = products[product].get("amount")
+                    product_price = self.model.fetch_one("SELECT price, discount FROM products WHERE code = %s", (product_code))
+                    discount_price = product_price[0] - (product_price[0] * product_price[1])
+                    final_price = discount_price * product_amount
+                    self.model.execute_query("""INSERT INTO invoices(product_price, no_products, products_value,
+                    invoice, product) VALUES({},{},{},{}, '{}')""".format(discount_price, product_amount, 
+                    final_price, no_invoice, product_code))
+            
+                products_price = self.model.execute_query(f"""SELECT SUM(p.price) FROM products p, invoices i
+                WHERE p.code = i.invoice AND i.invoice = {no_invoice}""")
+
+                self.model.execute_query(f"""UPDATE invoices SET total_value = {products_price + tickets_value}
+                WHERE code = {no_invoice} """)
+
+            response = make_response()
+
+
+            except Exception as e:
+                message = """Send me a structure like this:
+                                    {
+                                        "tickets": [
+                                            {
+                                                "code": "value",
+                                                "amount":value
+                                            }
+                                        ],  
+                                        "products": [
+                                            {
+                                                "code":"value", 
+                                                "amount":value
+                                            }
+                                        ]
+                                    }"""
+                response = make_response(jsonify({
+                    "statuscode": 400,
+                    "message": message
+                }))
+        
         return response
 
 class TicketsControllers(MethodView):

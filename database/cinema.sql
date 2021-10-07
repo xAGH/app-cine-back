@@ -10,12 +10,13 @@ CREATE TABLE products (
 
 CREATE TABLE ticket (
     code CHAR(5),
+    name CHAR(6),
     price FLOAT
 );
 
 CREATE TABLE invoices (
     code INT(5) ZEROFILL PRIMARY KEY AUTO_INCREMENT,
-    ticket CHAR(1) REFERENCES ticket (code),
+    ticket CHAR(5) REFERENCES ticket (code),
     ticket_price FLOAT,
     no_tickets INT,
     tickets_value FLOAT,
@@ -37,8 +38,8 @@ VALUES("CC-01", "Palomitas y gaseosa personal", 10000, 0.20),
 	  ("CC-02", "Sándwich y gaseosa personal", 14000, 0.20),
 	  ("CC-03", "Pizza y gaseosa personal", 12000, 0.20);
 
-INSERT INTO ticket VALUES("CT-01", 20000);
+INSERT INTO ticket VALUES("CT-01", "Diurna" ,20000);
 SET @base_price := (SELECT price FROM ticket WHERE code = "CT-01");
 INSERT INTO ticket 
-VALUES("CT-02", @base_price * 1.20),
-	  ("CT-02", @base_price * 1.40)
+VALUES("CT-02", "Tarde", @base_price * 1.20),
+	  ("CT-02", "Noche", @base_price * 1.40)
