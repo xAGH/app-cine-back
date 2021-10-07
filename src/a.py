@@ -1,0 +1,2 @@
+hola = []
+print(type(hola))
