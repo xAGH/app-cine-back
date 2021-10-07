@@ -1,4 +1,5 @@
-from flask import request, make_response, jsonify
+from itertools import product
+from flask import json, request, make_response, jsonify
 from flask.views import MethodView
 from src.models import Model
 from datetime import datetime
@@ -21,9 +22,7 @@ class InvoicingController(MethodView):
                 "error": "Invalid request"
             }
         }), 401)
-
         if request.is_json:
-
             try:
                 tickets = list(request.json['tickets'])
                 products = list(request.json['products'])
@@ -129,3 +128,31 @@ class ProductsControllers(MethodView):
 
         return response
 
+class InvoiceController(MethodView):
+
+    def __init__(self) -> None:
+        self.model = Model()
+    
+    def get(self):
+        pass
+
+    def post(self):
+        if request.is_json:
+            products = request.json['products']
+            tickets = request.json['tickets']
+            try:
+                pass
+            except Exception as e:
+                return make_response(jsonify({
+                    "response": {
+                        "statusCode": 400,
+                        "error": f"{e}"
+                    }
+                }), 400)
+        response = make_response(jsonify({
+            "response": {
+                "statusCode": 400,
+                "error": "Invalid request"
+            }
+        }), 400)
+        return response
