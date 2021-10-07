@@ -9,6 +9,7 @@ class FilesService:
     def upload(self, file):
         pass
 
+
 class QrcodeService:
 
     def create_qrcode(self):
