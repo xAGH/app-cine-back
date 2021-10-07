@@ -141,7 +141,15 @@ class InvoiceController(MethodView):
             products = request.json['products']
             tickets = request.json['tickets']
             try:
-                pass
+                products_value = 0
+                tickets_value = tickets['price'] * tickets['quantity']
+                for product in products:
+                    discount = self.model.fetch_one("SELECT discount FROM products WHERE code = %s", (product['code'], ))
+                    products_value += product['value'] * product['quantity']
+                    total_value = tickets_value + products_value
+                    discount_value = total_value * (1 - discount[0])
+                self.model.execute_query("INSERT INTO invoices(ticket, ticket_price, no_tickets, tickets_value, date_time, total_value) VALUES(%s, %s, %s, %s, %s, %s)", (tickets['code'], tickets['price'], tickets_value, datetime.utcnow(), discount_value))
+                return "Success"
             except Exception as e:
                 return make_response(jsonify({
                     "response": {
