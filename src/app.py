@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from src.routes import routes, invoicing_routes
 
 class Aplication():
@@ -8,6 +9,17 @@ class Aplication():
     def __init__(self):
         self.app = Flask(__name__)
         self.__register_routes()
+        self.__settings()
+    
+    def __settings(self):
+        try:
+            CORS(self.app, resources={
+                r"/*": {
+                    "origins": ["http://localhost:4200", "*"]
+                }
+            }, supports_credentials=True)
+        except Exception:
+            pass
 
     def __register_routes(self):
         #self.app.add_url_rule(routes["index"], view_func=routes["index_controller"])
