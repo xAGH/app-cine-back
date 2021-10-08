@@ -29,11 +29,8 @@ class Model:
             raise Exception
 
     def execute_query(self, sql: str, *args):
-        try:
+        
             with self.connection.cursor() as cur:
                 cur.execute(sql, *args)
                 self.connection.commit()
-        except MySQLError:
-            raise MySQLError
-        except Exception:
-            raise Exception
+        
