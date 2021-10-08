@@ -1,5 +1,4 @@
-from itertools import product
-from flask import json, request, make_response, jsonify
+from flask import request, make_response, jsonify
 from flask.views import MethodView
 from src.models import Model
 from datetime import datetime
@@ -9,11 +8,71 @@ class InvoicingController(MethodView):
     def __init__(self) -> None:
         self.model = Model()
 
-    def query(self):
-        pass
-
-    def get(self):
-        pass
+    def get(self, id=None):
+        if request.is_json:
+            if id is not None:
+                try:
+                    invoice = self.model.fetch_one("SELECT i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice WHERE i.code = %s", (id, ))
+                    if invoice is None:
+                        return make_response(jsonify({
+                            "response": {
+                                "statusCode": 404,
+                                "error": f"Invoice {id} isn't found"
+                            }
+                        }), 404)
+                    response = make_response(jsonify({
+                        "response": {
+                            "statusCode": 200,
+                            "message": "Invoice by id",
+                            "data": invoice
+                        }
+                    }), 200)
+                    return response
+                except Exception:
+                    return make_response(jsonify({
+                        "response": {
+                            "statusCode": 400,
+                            "error": "Invalid request"
+                        }
+                    }), 400)
+            else:
+                try:
+                    if request.args:
+                        invoice_params_id = request.args.get("id", "")
+                        invoice_by_id = self.model.fetch_one("SELECT i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice WHERE i.code = %s", (invoice_params_id, ))
+                        if invoice_by_id is None:
+                            return make_response(jsonify({
+                                "response": {
+                                    "statusCode": 404,
+                                    "error": f"Invoice {invoice_params_id} isn't found"
+                                }
+                            }), 404)
+                        response = make_response(jsonify({
+                            "response": {
+                                "statusCode": 200,
+                                "message": "Retuning data by request params",
+                                "data": invoice_by_id
+                            }
+                        }), 200)
+                        return response
+                    data = self.model.fetch_all("SELECT i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice")
+                    response = make_response(jsonify({
+                        "response": {
+                            "statusCode": 200,
+                            "message": "All invoices data",
+                            "data": data
+                        }
+                    }), 200)
+                    return response
+                except Exception:
+                    pass
+        response = make_response(jsonify({
+            "response": {
+                "statusCode": 400,
+                "error": "Invalid request"
+            }
+        }), 400)
+        return response
 
     def post(self):
         response = make_response(jsonify({
@@ -23,7 +82,7 @@ class InvoicingController(MethodView):
             }
         }), 401)
         if request.is_json:
-            
+            try:
                 tickets = request.json['tickets']
                 products = request.json['products']
                 ticket_code = tickets.get("code")
@@ -58,10 +117,13 @@ class InvoicingController(MethodView):
                         "message": "Invoice created successfully"
                     }
                 }), 201)
-
-
-            
-        
+            except Exception:
+                return make_response(jsonify({
+                    "response": {
+                        "statusCode": 400,
+                        "error": f"{Exception}"
+                    }
+                }), 400)
         return response
 
 class TicketsControllers(MethodView):
@@ -117,42 +179,4 @@ class ProductsControllers(MethodView):
                         "message": "Send me a 'ticket' key"
                     }
                 }), 406)
-
-        return response
-
-class InvoiceController(MethodView):
-
-    def __init__(self) -> None:
-        self.model = Model()
-    
-    def get(self):
-        pass
-
-    def post(self):
-        if request.is_json:
-            products = request.json['products']
-            tickets = request.json['tickets']
-            try:
-                products_value = 0
-                tickets_value = tickets['price'] * tickets['quantity']
-                for product in products:
-                    discount = self.model.fetch_one("SELECT discount FROM products WHERE code = %s", (product['code'], ))
-                    products_value += product['value'] * product['quantity']
-                    total_value = tickets_value + products_value
-                    discount_value = total_value * (1 - discount[0])
-                self.model.execute_query("INSERT INTO invoices(ticket, ticket_price, no_tickets, tickets_value, date_time, total_value) VALUES(%s, %s, %s, %s, %s, %s)", (tickets['code'], tickets['price'], tickets_value, datetime.utcnow(), discount_value))
-                return "Success"
-            except Exception as e:
-                return make_response(jsonify({
-                    "response": {
-                        "statusCode": 400,
-                        "error": f"{e}"
-                    }
-                }), 400)
-        response = make_response(jsonify({
-            "response": {
-                "statusCode": 400,
-                "error": "Invalid request"
-            }
-        }), 400)
         return response

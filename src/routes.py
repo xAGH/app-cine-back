@@ -1,14 +1,12 @@
-from re import A
 from src.controllers import *
 
 routes = {
-    #"index": "/", "index_controller": IndexController.as_view("index"),
-    "tickets": "/tickets", "tickets_controller": TicketsControllers.as_view("tickets"),
-    "products": "/products", "products_controller": ProductsControllers.as_view("products"),
-    "invoicing": "/invoicing", "invoicing_view": InvoicingController.as_view("invoicing"),
+    "tickets": "/api/tickets", "tickets_controller": TicketsControllers.as_view("tickets"),
+    "products": "/api/products", "products_controller": ProductsControllers.as_view("products"),
 }
 
 invoicing_routes = {
-    "invoice_view": InvoiceController.as_view("invoice"),
-    "invoice": "/invoice"
+    "invoice_view": InvoicingController.as_view("invoicing"),
+    "invoice": "/api/invoicing",
+    "invoice_by": "/api/invoicing/<int:id>"
 }
