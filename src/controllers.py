@@ -146,7 +146,7 @@ class ProductsControllers(MethodView):
     def __init__(self):
         self.model = Model()
 
-    def get(self):
+    def post(self):
         response = make_response(jsonify({
             "response": {
                 "statuscode": 400,
