@@ -5,15 +5,18 @@ from src.routes import routes, invoicing_routes
 class Aplication():
 
     app: Flask
-
-    def __init__(self):
-        self.app = Flask(__name__)
-        self.__register_routes()
-        self.__settings()
+ 
+    @classmethod
+    def create_app(cls) -> Flask:
+        cls.app = Flask(__name__)
+        cls.__settings()
+        cls.__register_routes()
+        return cls.app
     
-    def __settings(self):
+    @classmethod
+    def __settings(cls):
         try:
-            CORS(self.app, resources={
+            CORS(cls.app, resources={
                 r"/*": {
                     "origins": ["http://localhost:4200", "*"]
                 }
@@ -21,9 +24,11 @@ class Aplication():
         except Exception:
             pass
 
-    def __register_routes(self):
+    @classmethod
+    def __register_routes(cls):
         #self.app.add_url_rule(routes["index"], view_func=routes["index_controller"])
-        self.app.add_url_rule(routes["tickets"], view_func=routes["tickets_controller"], methods=['GET'])
-        self.app.add_url_rule(routes["products"], view_func=routes["products_controller"], methods=['GET'])
-        self.app.add_url_rule(routes["invoicing"], view_func=routes["invoicing_view"], methods=['GET', 'POST'])
-        self.app.add_url_rule(invoicing_routes["invoice"],view_func=invoicing_routes["invoice_view"], methods=['GET', 'POST'])
+        cls.app.add_url_rule(routes["tickets"], view_func=routes["tickets_controller"], methods=['GET'])
+        cls.app.add_url_rule(routes["products"], view_func=routes["products_controller"], methods=['GET'])
+        cls.app.add_url_rule(routes["invoicing"], view_func=routes["invoicing_view"], methods=['GET', 'POST'])
+        cls.app.add_url_rule(invoicing_routes["invoice"], view_func=invoicing_routes["invoice_view"], methods=['GET', 'POST'])
+        cls.app.add_url_rule(invoicing_routes["invoice_by"], view_func=invoicing_routes["invoice_view"], methos=['GET', 'PUT', 'PATCH', 'DELETE'])

@@ -1,6 +1,7 @@
 from itertools import product
 from flask import json, request, make_response, jsonify
 from flask.views import MethodView
+from werkzeug.wrappers import response
 from src.models import Model
 from datetime import datetime
 
@@ -133,8 +134,57 @@ class InvoiceController(MethodView):
     def __init__(self) -> None:
         self.model = Model()
     
-    def get(self):
-        pass
+    def get(self, id=None):
+        if request.is_json:
+            if id is not None:
+                try:
+                    invoice = self.model.fetch_one("SELECT * FROM invoices WHERE code = %s", (id, ))
+                    response = make_response(jsonify({
+                        "response": {
+                            "statusCode": 200,
+                            "message": "Invoice by id",
+                            "data": invoice
+                        }
+                    }), 200)
+                    return response
+                except Exception:
+                    return make_response(jsonify({
+                        "response": {
+                            "statusCode": 400,
+                            "error": "Invalid request"
+                        }
+                    }), 400)
+            else:
+                try:
+                    if request.args:
+                        invoice_params_id = request.args.get("id", "")
+                        invoice_by_id = self.model.fetch_one("SELECT * FROM invoices WHERE code = %s", (invoice_params_id, ))
+                        response = make_response(jsonify({
+                            "response": {
+                                "statusCode": 200,
+                                "message": "Retuning data by request params",
+                                "data": invoice_by_id
+                            }
+                        }), 200)
+                        return response
+                    data = self.model.fetch_all("SELECT * FROM invoices")
+                    response = make_response(jsonify({
+                        "response": {
+                            "statusCode": 200,
+                            "message": "All invoices data",
+                            "data": data
+                        }
+                    }), 200)
+                    return response
+                except Exception:
+                    pass
+        response = make_response(jsonify({
+            "response": {
+                "statusCode": 400,
+                "error": "Invalid request"
+            }
+        }), 400)
+        return response
 
     def post(self):
         if request.is_json:
@@ -148,8 +198,15 @@ class InvoiceController(MethodView):
                     products_value += product['value'] * product['quantity']
                     total_value = tickets_value + products_value
                     discount_value = total_value * (1 - discount[0])
-                self.model.execute_query("INSERT INTO invoices(ticket, ticket_price, no_tickets, tickets_value, date_time, total_value) VALUES(%s, %s, %s, %s, %s, %s)", (tickets['code'], tickets['price'], tickets_value, datetime.utcnow(), discount_value))
-                return "Success"
+                print(products, tickets, discount_value)
+                self.model.execute_query("INSERT INTO invoices(ticket, ticket_price, no_tickets, tickets_value, date_time, total_value) VALUES(%s, %f, %i, %f, %s, %f)", (tickets['code'], tickets['price'], tickets_value, datetime.utcnow(), discount_value))
+                response = make_response(jsonify({
+                    "response": {
+                        "statusCode": 201,
+                        "message": "Success! Invoice was generated"
+                    }
+                }), 201)
+                return response
             except Exception as e:
                 return make_response(jsonify({
                     "response": {
@@ -164,3 +221,11 @@ class InvoiceController(MethodView):
             }
         }), 400)
         return response
+
+class FilesController(MethodView):
+
+    def get(self):
+        pass
+
+    def post(self):
+        pass

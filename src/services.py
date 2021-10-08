@@ -4,7 +4,7 @@ class FilesService:
 
     @classmethod
     def allow_file(cls, filename: str):
-        pass
+        return 
 
     def upload(self, file):
         pass

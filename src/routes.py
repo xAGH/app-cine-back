@@ -10,5 +10,6 @@ routes = {
 
 invoicing_routes = {
     "invoice_view": InvoiceController.as_view("invoice"),
-    "invoice": "/invoice"
+    "invoice": "/invoice",
+    "invoice_by": "/invoice/<int:id>"
 }
