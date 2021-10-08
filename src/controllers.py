@@ -150,7 +150,7 @@ class ProductsControllers(MethodView):
         response = make_response(jsonify({
             "response": {
                 "statuscode": 400,
-                "message": "Send me a json format"
+                "message": "Send me params with a ticket key"
             }
         }), 400)
 
@@ -161,10 +161,10 @@ class ProductsControllers(MethodView):
             try:
 
                 data = self.model.fetch_all("SELECT * FROM products")
-                message = "avaible"
+                message = True
 
                 if show_combos == "CT-01":
-                    message = "unvaible"
+                    message = False
 
                 response = make_response(jsonify({
                     "response": {
