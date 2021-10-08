@@ -84,7 +84,7 @@ class InvoicingController(MethodView):
         }), 401)
         if request.is_json:
             try:
-                tickets = request.json['tickets']
+                tickets = request.json['ticket']
                 products = request.json['products']
                 ticket_code = tickets.get("code")
                 ticket_amount = tickets.get("amount")
