@@ -154,10 +154,12 @@ class ProductsControllers(MethodView):
             }
         }), 400)
 
-        if request.is_json:
+        show_combos = request.args["ticket"]
+
+        if show_combos:
             
             try:
-                show_combos = request.json["ticket"]
+                
                 data = self.model.fetch_all("SELECT * FROM products")
                 message = "avaible"
 
