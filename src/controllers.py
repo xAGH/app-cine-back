@@ -1,7 +1,5 @@
-from itertools import product
-from flask import json, request, make_response, jsonify
+from flask import request, make_response, jsonify
 from flask.views import MethodView
-from werkzeug.wrappers import response
 from src.models import Model
 from datetime import datetime
 
@@ -9,9 +7,6 @@ class InvoicingController(MethodView):
 
     def __init__(self) -> None:
         self.model = Model()
-
-    def query(self):
-        pass
 
     def get(self, id=None):
         if request.is_json:
@@ -61,8 +56,6 @@ class InvoicingController(MethodView):
                         }), 200)
                         return response
                     data = self.model.fetch_all("SELECT i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice")
-                    if data is None:
-                        pass
                     response = make_response(jsonify({
                         "response": {
                             "statusCode": 200,
@@ -186,57 +179,4 @@ class ProductsControllers(MethodView):
                         "message": "Send me a 'ticket' key"
                     }
                 }), 406)
-
         return response
-
-class InvoiceController(MethodView):
-
-    def __init__(self) -> None:
-        self.model = Model()
-    
-    def get(self, id=None):
-        pass
-
-    def post(self):
-        if request.is_json:
-            products = request.json['products']
-            tickets = request.json['tickets']
-            try:
-                products_value = 0
-                tickets_value = tickets['price'] * tickets['quantity']
-                for product in products:
-                    discount = self.model.fetch_one("SELECT discount FROM products WHERE code = %s", (product['code'], ))
-                    products_value += product['value'] * product['quantity']
-                    total_value = tickets_value + products_value
-                    discount_value = total_value * (1 - discount[0])
-                print(products, tickets, discount_value)
-                self.model.execute_query("INSERT INTO invoices(ticket, ticket_price, no_tickets, tickets_value, date_time, total_value) VALUES(%s, %f, %i, %f, %s, %f)", (tickets['code'], tickets['price'], tickets_value, datetime.utcnow(), discount_value))
-                response = make_response(jsonify({
-                    "response": {
-                        "statusCode": 201,
-                        "message": "Success! Invoice was generated"
-                    }
-                }), 201)
-                return response
-            except Exception as e:
-                return make_response(jsonify({
-                    "response": {
-                        "statusCode": 400,
-                        "error": f"{e}"
-                    }
-                }), 400)
-        response = make_response(jsonify({
-            "response": {
-                "statusCode": 400,
-                "error": "Invalid request"
-            }
-        }), 400)
-        return response
-
-class FilesController(MethodView):
-
-    def get(self):
-        pass
-
-    def post(self):
-        pass
