@@ -97,18 +97,20 @@ class InvoicingController(MethodView):
                 (ticket_code, ticket_price, ticket_amount, tickets_value, date_time, ))
 
                 no_invoice = (self.model.fetch_one("SELECT code FROM invoices ORDER BY code DESC")[0])
-                for product in products:
-                    product_code = product.get("code")
-                    product_amount = product.get("amount")
-                    product_price = self.model.fetch_one("SELECT price FROM products WHERE code = %s", (product_code, )) [0]
-                    final_price = product_price * product_amount
+                products_price = 0
+                if len(products) > 1:
+                    for product in products:
+                        product_code = product.get("code")
+                        product_amount = product.get("amount")
+                        product_price = self.model.fetch_one("SELECT price FROM products WHERE code = %s", (product_code, )) [0]
+                        final_price = product_price * product_amount
 
-                    self.model.execute_query(f"""INSERT INTO invoices_details(product_price, no_products, products_value,
-                    invoice, product) VALUES({product_price}, {product_amount}, {final_price}, {no_invoice}, '{product_code}')""")
-            
-                products_price = self.model.fetch_one(f"""SELECT SUM(p.price) FROM products p, invoices_details i WHERE 
-                p.code = i.product AND i.invoice  = {no_invoice}""")[0]
-                print(product_price)
+                        self.model.execute_query(f"""INSERT INTO invoices_details(product_price, no_products, products_value,
+                        invoice, product) VALUES({product_price}, {product_amount}, {final_price}, {no_invoice}, '{product_code}')""")
+                
+                    products_price = self.model.fetch_one(f"""SELECT SUM(p.price) FROM products p, invoices_details i WHERE 
+                    p.code = i.product AND i.invoice  = {no_invoice}""")[0]
+                    print(product_price)
                 self.model.execute_query(f"""UPDATE invoices SET total_value = {products_price + tickets_value}, products_value = {products_price}
                 WHERE code = {no_invoice} """)
 
