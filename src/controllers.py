@@ -23,7 +23,7 @@ class InvoicingController(MethodView):
                     response = make_response(jsonify({
                         "response": {
                             "statusCode": 200,
-                            "message": "Invoice by id",
+                            "message": f"Returning specific invoice",
                             "data": invoice
                         }
                     }), 200)
@@ -153,30 +153,43 @@ class ProductsControllers(MethodView):
                 "message": "Send me a json format"
             }
         }), 400)
+        try:
+            if request.args:
+                show_combos = request.args['code']
+                tickets = self.model.fetch_one("SELECT * FROM ticket WHERE code = %s", (show_combos))
+                if tickets is None:
+                    return make_response(jsonify({
+                        "response": {
+                            "statusCode": 400,
+                            "error": f"Ticket {show_combos} doesn't exists"
+                        }
+                    }), 400)
+                elif tickets[0] == "CT-01":
+                    disponibility = False
+                    return make_response(jsonify({
+                        "response": {
+                            "statusCode": 400,
+                            "message": "The ticket is unavailable",
+                            "available": disponibility
+                        }
+                    }), 400)
+            data = self.model.fetch_all("SELECT * FROM products")
+            disponibility = True
+            response = make_response(jsonify({
+                "response": {
+                    "statuscode": 200,
+                    "message": "Products are available",
+                    "available": disponibility,
+                    "data": data,
+                }
+            }), 200)
 
-        if request.is_json:
-            
-            try:
-                show_combos = request.json["ticket"]
-                data = self.model.fetch_all("SELECT * FROM products")
-                message = "avaible"
-
-                if show_combos == "CT-01":
-                    message = "unvaible"
-
-                response = make_response(jsonify({
-                    "response": {
-                        "statuscode": 200,
-                        "message": message,
-                        "data": data,
-                    }
-                }), 200)
-
-            except:
-                response = make_response(jsonify({
-                    "response": {
-                        "statuscode": 406,
-                        "message": "Send me a 'ticket' key"
-                    }
-                }), 406)
+        except Exception as e:
+            response = make_response(jsonify({
+                "response": {
+                    "statuscode": 406,
+                    "message": "Send me a 'ticket' key",
+                    "exception": f"{e}"
+                }
+            }), 406)
         return response
