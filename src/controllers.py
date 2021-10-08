@@ -1,4 +1,5 @@
-from flask import request, make_response, jsonify
+from sys import exec_prefix
+from flask import json, request, make_response, jsonify
 from flask.views import MethodView
 from src.models import Model
 from datetime import datetime
@@ -114,17 +115,52 @@ class InvoicingController(MethodView):
                 response = make_response(jsonify({
                     "resposne": {
                         "statuscode": 201,
-                        "message": "Invoice created successfully"
+                        "message": "Invoice created successfully",
+                        "invoice": no_invoice
                     }
                 }), 201)
-            except Exception:
+            except Exception as e:
                 return make_response(jsonify({
                     "response": {
                         "statusCode": 400,
-                        "error": f"{Exception}"
+                        "error": f"{e}"
                     }
                 }), 400)
         return response
+
+    def delete(self, id):
+        response = make_response(jsonify({
+            "response": {
+                "statusCode": 401,
+                "error": "Send me a route param"
+            }
+        }), 401)
+
+        if id:
+
+            try:
+                invoice = request.json['invoice']
+                self.model.execute_query(f"DELETE FROM invoices_details WHERE invoice = {invoice};")
+                self.model.execute_query(f"DELETE FROM invoices WHERE code = {invoice};")
+
+                response = make_response(jsonify({
+                    "response": {
+                        "statuscode": 200,
+                        "message": "Invoice deleted successfuly"
+                    }
+                }), 200)
+
+            except Exception as e:
+                response = make_response(jsonify({
+                    "response": {
+                        "statuscode": 406,
+                        "message": "Send me a 'id' param.",
+                        "error": f"{e}"
+                    }
+                }))
+
+        return response
+
 
 class TicketsControllers(MethodView):
 
