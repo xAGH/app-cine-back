@@ -146,11 +146,11 @@ class ProductsControllers(MethodView):
     def __init__(self):
         self.model = Model()
 
-    def post(self):
+    def get(self):
         response = make_response(jsonify({
             "response": {
                 "statuscode": 400,
-                "message": "Send me a json format"
+                "message": "Send me params with a ticket key"
             }
         }), 400)
 
@@ -159,12 +159,11 @@ class ProductsControllers(MethodView):
         if show_combos:
             
             try:
-                
                 data = self.model.fetch_all("SELECT * FROM products")
-                message = "avaible"
+                message = True
 
                 if show_combos == "CT-01":
-                    message = "unvaible"
+                    message = False
 
                 response = make_response(jsonify({
                     "response": {
@@ -178,7 +177,7 @@ class ProductsControllers(MethodView):
                 response = make_response(jsonify({
                     "response": {
                         "statuscode": 406,
-                        "message": "Send me a 'ticket' key"
+                        "message": "Send me a 'ticket' param"
                     }
                 }), 406)
         return response
