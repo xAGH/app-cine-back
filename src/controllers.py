@@ -146,7 +146,7 @@ class ProductsControllers(MethodView):
     def __init__(self):
         self.model = Model()
 
-    def post(self):
+    def get(self):
         response = make_response(jsonify({
             "response": {
                 "statuscode": 400,
@@ -154,10 +154,12 @@ class ProductsControllers(MethodView):
             }
         }), 400)
 
-        if request.is_json:
+        show_combos = request.args["ticket"]
+
+        if show_combos:
             
             try:
-                show_combos = request.json["ticket"]
+
                 data = self.model.fetch_all("SELECT * FROM products")
                 message = "avaible"
 
@@ -176,7 +178,7 @@ class ProductsControllers(MethodView):
                 response = make_response(jsonify({
                     "response": {
                         "statuscode": 406,
-                        "message": "Send me a 'ticket' key"
+                        "message": "Send me a 'ticket' param"
                     }
                 }), 406)
         return response
