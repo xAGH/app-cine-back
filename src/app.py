@@ -29,6 +29,6 @@ class Aplication():
         #self.app.add_url_rule(routes["index"], view_func=routes["index_controller"])
         cls.app.add_url_rule(routes["tickets"], view_func=routes["tickets_controller"], methods=['GET'])
         cls.app.add_url_rule(routes["products"], view_func=routes["products_controller"], methods=['GET'])
-        cls.app.add_url_rule(routes["invoicing"], view_func=routes["invoicing_view"], methods=['GET', 'POST'])
+        #cls.app.add_url_rule(routes["invoicing"], view_func=routes["invoicing_view"], methods=['GET', 'POST'])
         cls.app.add_url_rule(invoicing_routes["invoice"], view_func=invoicing_routes["invoice_view"], methods=['GET', 'POST'])
-        cls.app.add_url_rule(invoicing_routes["invoice_by"], view_func=invoicing_routes["invoice_view"], methos=['GET', 'PUT', 'PATCH', 'DELETE'])
+        cls.app.add_url_rule(invoicing_routes["invoice_by"], view_func=invoicing_routes["invoice_view"], methods=['GET', 'PUT', 'PATCH', 'DELETE'])
