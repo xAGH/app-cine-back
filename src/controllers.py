@@ -38,8 +38,8 @@ class InvoicingController(MethodView):
             else:
                 try:
                     if request.args:
-                        invoice_params_id = request.args.get("id", "")
-                        invoice_by_id = self.model.fetch_one("SELECT i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice WHERE i.code = %s", (invoice_params_id, ))
+                        invoice_params_id = request.args['id']
+                        invoice_by_id = self.model.fetch_one("SELECT COUNT(*) AS ProductsQuantity, i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice WHERE i.code = %s GROUP BY ProductsQuantity", (invoice_params_id, ))
                         if invoice_by_id is None:
                             return make_response(jsonify({
                                 "response": {
@@ -64,7 +64,7 @@ class InvoicingController(MethodView):
                         }
                     }), 200)
                     return response
-                except Exception:
+                except Exception as e:
                     pass
         response = make_response(jsonify({
             "response": {
