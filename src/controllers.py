@@ -193,6 +193,12 @@ class ProductsControllers(MethodView):
         self.model = Model()
 
     def get(self):
+        response = make_response(jsonify({
+            "response": {
+                "statuscode": 400,
+                "message": "Send me params with a ticket key"      
+            }
+        }), 400)
         try:
             if request.args:
                 show_combos = request.args['ticket']
