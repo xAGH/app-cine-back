@@ -9,7 +9,7 @@ class Model:
 
     def fetch_one(self, sql: str, as_dict=False, *args):
         try:
-            cursor = self.connection.cursor(pymysql.cursors.DictCursor) if as_dict else self.connection.cursor();
+            cursor = self.connection.cursor(pymysql.cursors.DictCursor) if as_dict else self.connection.cursor()
             with cursor as cur:
                 cur.execute(sql, *args)
                 data = cur.fetchone()
@@ -21,8 +21,8 @@ class Model:
 
     def fetch_all(self, sql: str, as_dict=False, *args):
         try:
-            cursor = self.connection.cursor(pymysql.cursors.DictCursor) if as_dict else self.connection.cursor();
-            with self.connection.cursor(pymysql.cursors.DictCursor) as cur:
+            cursor = self.connection.cursor(pymysql.cursors.DictCursor) if as_dict else self.connection.cursor()
+            with cursor as cur:
                 cur.execute(sql, *args)
                 data = cur.fetchall()
                 return data
@@ -31,8 +31,12 @@ class Model:
         except Exception:
             raise Exception
 
-    def execute_query(self, sql: str, *args):
-        
+    def execute_query(self, sql: str, *args) -> None:
+        try:
             with self.connection.cursor() as cur:
                 cur.execute(sql, *args)
                 self.connection.commit()
+        except MySQLError:
+            raise MySQLError
+        except Exception:
+            raise Exception

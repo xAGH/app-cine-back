@@ -1,5 +1,4 @@
-from sys import exec_prefix
-from flask import json, request, make_response, jsonify
+from flask import request, make_response, jsonify
 from flask.views import MethodView
 from src.models import Model
 from datetime import datetime
@@ -23,7 +22,6 @@ class InvoicingController(MethodView):
                             "error": f"Invoice {id} isn't found"
                         }
                     }), 404)
-
                 invoice['products'] = invoice_details;
                 response = make_response(jsonify({
                     "response": {
@@ -168,9 +166,36 @@ class InvoicingController(MethodView):
                         "error": f"{e}"
                     }
                 }))
-
         return response
 
+    """
+        :param code representa el código de la factura a actualizar
+    """
+    def patch(self, code):
+        if request.is_json:
+            status = request.json['status']
+            try:
+                self.model.execute_query("UPDATE invoices SET status = %s WHERE code = %s", (status, code))
+                response = make_response(jsonify({
+                    "response": {
+                        "statusCode": 204,
+                        "message": f"Successfully! Invoice {code} was updated"
+                    }
+                }), 204)
+            except Exception as e:
+                return make_response(jsonify({
+                    "response": {
+                        "statusCode": 400,
+                        "error": f"Exception: {e}"
+                    }
+                }), 400)
+        response = make_response(jsonify({
+            "response": {
+                "statusCode": 400,
+                "error": "Invalid request, only JSON Format"
+            }
+        }), 400)
+        return response
 
 class TicketsControllers(MethodView):
 
@@ -231,7 +256,6 @@ class ProductsControllers(MethodView):
                     "data": data,
                 }
             }), 200)
-
         except Exception as e:
             import traceback
             traceback.print_exc()
