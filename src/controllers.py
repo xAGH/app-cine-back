@@ -91,14 +91,16 @@ class InvoicingController(MethodView):
                 tickets = request.json['ticket']
                 products = request.json['products']
                 ticket_code = tickets.get("code")
-                ticket_amount = tickets.get("amount")
-                ticket_price = float(self.model.fetch_one("SELECT price FROM ticket WHERE code = %s", (ticket_code, ))[0])
+                ticket_amount = float(tickets.get("amount"))
+                query = "SELECT price FROM ticket WHERE code = '%s'" %(ticket_code)
+                print(query)
+                ticket_price = float(self.model.fetch_one(query)[0])
                 tickets_value = ticket_amount * ticket_price
                 date_time = str(datetime.now())[0:-7]
 
                 self.model.execute_query("""INSERT INTO invoices(ticket, ticket_price, no_tickets, 
-                tickets_value, date_time) VALUES(%s, %s, %s, %s, %s)""",
-                (ticket_code, ticket_price, ticket_amount, tickets_value, date_time, ))
+                tickets_value, date_time) VALUES('%s', '%s', '%s', '%s', '%s')"""
+                %(ticket_code, ticket_price, ticket_amount, tickets_value, date_time))
 
                 no_invoice = (self.model.fetch_one("SELECT code FROM invoices ORDER BY code DESC")[0])
                 products_price = 0
@@ -106,7 +108,7 @@ class InvoicingController(MethodView):
                     for product in products:
                         product_code = product.get("code")
                         product_amount = product.get("amount")
-                        product_price = self.model.fetch_one("SELECT price FROM products WHERE code = %s", (product_code, )) [0]
+                        product_price = self.model.fetch_one("SELECT price FROM products WHERE code = %s" %(product_code)) [0]
                         final_price = product_price * product_amount
 
                         self.model.execute_query(f"""INSERT INTO invoices_details(product_price, no_products, products_value,
@@ -119,13 +121,15 @@ class InvoicingController(MethodView):
                 WHERE code = {no_invoice} """)
 
                 response = make_response(jsonify({
-                    "resposne": {
+                    "response": {
                         "statuscode": 201,
                         "message": "Invoice created successfully",
                         "invoice": no_invoice
                     }
                 }), 201)
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 return make_response(jsonify({
                     "response": {
                         "statusCode": 400,
@@ -189,16 +193,12 @@ class ProductsControllers(MethodView):
         self.model = Model()
 
     def get(self):
-        response = make_response(jsonify({
-            "response": {
-                "statuscode": 400,
-                "message": "Send me params with a ticket key"
-            }
-        }), 400)
         try:
             if request.args:
-                show_combos = request.args['code']
-                tickets = self.model.fetch_one("SELECT * FROM ticket WHERE code = %s", (show_combos))
+                show_combos = request.args['ticket']
+                query = "SELECT * FROM ticket WHERE code = '%s'" %(show_combos)
+                print(f"{query=}")
+                tickets = self.model.fetch_one(query)
                 if tickets is None:
                     return make_response(jsonify({
                         "response": {
@@ -227,11 +227,13 @@ class ProductsControllers(MethodView):
             }), 200)
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             response = make_response(jsonify({
                 "response": {
                     "statuscode": 406,
                     "message": "Send me a 'ticket' key",
-                    "exception": f"{e}"
+                    "exception": f"{e}",
                 }
             }), 406)
         return response
