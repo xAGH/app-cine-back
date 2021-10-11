@@ -12,9 +12,9 @@ class InvoicingController(MethodView):
     def get(self, id=None):
         if id is not None:
             try:
-                query = "SELECT * FROM invoices AS i WHERE i.code = %s" %(id);
+                query = "SELECT i.*, t.name as ticket_name FROM invoices AS i INNER JOIN ticket t ON t.code = i.ticket   WHERE i.code = %s" %(id);
                 invoice = self.model.fetch_one(query, as_dict=True)
-                query = "SElECT * FROM invoices_details WHERE invoice = %s" %(id);
+                query = "SElECT id.*, p.name FROM invoices_details id INNER JOIN products p ON p.code = id.product WHERE invoice = %s" %(id);
                 invoice_details = self.model.fetch_all(query, as_dict=True)
                 if invoice is None:
                     return make_response(jsonify({
@@ -108,7 +108,7 @@ class InvoicingController(MethodView):
                     for product in products:
                         product_code = product.get("code")
                         product_amount = product.get("amount")
-                        product_price = self.model.fetch_one("SELECT price FROM products WHERE code = %s" %(product_code)) [0]
+                        product_price = self.model.fetch_one("SELECT price FROM products WHERE code = '%s'" %(product_code)) [0]
                         final_price = product_price * product_amount
 
                         self.model.execute_query(f"""INSERT INTO invoices_details(product_price, no_products, products_value,
