@@ -1,5 +1,4 @@
-from sys import exec_prefix
-from flask import json, request, make_response, jsonify
+from flask import request, make_response, jsonify
 from flask.views import MethodView
 from src.models import Model
 from datetime import datetime
@@ -10,63 +9,66 @@ class InvoicingController(MethodView):
         self.model = Model()
 
     def get(self, id=None):
-        if request.is_json:
-            if id is not None:
-                try:
-                    invoice = self.model.fetch_one("SELECT i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice WHERE i.code = %s", (id, ))
-                    if invoice is None:
+        if id is not None:
+            try:
+                query = "SELECT i.*, t.name as ticket_name FROM invoices AS i INNER JOIN ticket t ON t.code = i.ticket   WHERE i.code = %s" %(id);
+                invoice = self.model.fetch_one(query, as_dict=True)
+                query = "SElECT id.*, p.name FROM invoices_details id INNER JOIN products p ON p.code = id.product WHERE invoice = %s" %(id);
+                invoice_details = self.model.fetch_all(query, as_dict=True)
+                if invoice is None:
+                    return make_response(jsonify({
+                        "response": {
+                            "statusCode": 404,
+                            "error": f"Invoice {id} isn't found"
+                        }
+                    }), 404)
+                invoice['products'] = invoice_details;
+                response = make_response(jsonify({
+                    "response": {
+                        "statusCode": 200,
+                        "message": f"Returning specific invoice",
+                        "data": invoice
+                    }
+                }), 200)
+                return response
+            except Exception:
+                return make_response(jsonify({
+                    "response": {
+                        "statusCode": 400,
+                        "error": "Invalid request"
+                    }
+                }), 400)
+        else:
+            try:
+                if request.args:
+                    invoice_params_id = request.args.get("id", "")
+                    invoice_by_id = self.model.fetch_one("SELECT i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice WHERE i.code = %s" %(invoice_params_id, ))
+                    if invoice_by_id is None:
                         return make_response(jsonify({
                             "response": {
                                 "statusCode": 404,
-                                "error": f"Invoice {id} isn't found"
+                                "error": f"Invoice {invoice_params_id} isn't found"
                             }
                         }), 404)
                     response = make_response(jsonify({
                         "response": {
                             "statusCode": 200,
-                            "message": "Invoice by id",
-                            "data": invoice
+                            "message": "Retuning data by request params",
+                            "data": invoice_by_id
                         }
                     }), 200)
                     return response
-                except Exception:
-                    return make_response(jsonify({
-                        "response": {
-                            "statusCode": 400,
-                            "error": "Invalid request"
-                        }
-                    }), 400)
-            else:
-                try:
-                    if request.args:
-                        invoice_params_id = request.args.get("id", "")
-                        invoice_by_id = self.model.fetch_one("SELECT i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice WHERE i.code = %s", (invoice_params_id, ))
-                        if invoice_by_id is None:
-                            return make_response(jsonify({
-                                "response": {
-                                    "statusCode": 404,
-                                    "error": f"Invoice {invoice_params_id} isn't found"
-                                }
-                            }), 404)
-                        response = make_response(jsonify({
-                            "response": {
-                                "statusCode": 200,
-                                "message": "Retuning data by request params",
-                                "data": invoice_by_id
-                            }
-                        }), 200)
-                        return response
-                    data = self.model.fetch_all("SELECT i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice")
-                    response = make_response(jsonify({
-                        "response": {
-                            "statusCode": 200,
-                            "message": "All invoices data",
-                            "data": data
-                        }
-                    }), 200)
-                    return response
-                except Exception:
-                    pass
+                data = self.model.fetch_all("SELECT i.*, id.* FROM invoices AS i INNER JOIN invoices_details AS id ON i.code = id.invoice")
+                response = make_response(jsonify({
+                    "response": {
+                        "statusCode": 200,
+                        "message": "All invoices data",
+                        "data": data
+                    }
+                }), 200)
+                return response
+            except Exception:
+                pass
         response = make_response(jsonify({
             "response": {
                 "statusCode": 400,
@@ -87,14 +89,16 @@ class InvoicingController(MethodView):
                 tickets = request.json['ticket']
                 products = request.json['products']
                 ticket_code = tickets.get("code")
-                ticket_amount = tickets.get("amount")
-                ticket_price = float(self.model.fetch_one("SELECT price FROM ticket WHERE code = %s", (ticket_code, ))[0])
+                ticket_amount = float(tickets.get("amount"))
+                query = "SELECT price FROM ticket WHERE code = '%s'" %(ticket_code)
+                print(query)
+                ticket_price = float(self.model.fetch_one(query)[0])
                 tickets_value = ticket_amount * ticket_price
                 date_time = str(datetime.now())[0:-7]
 
                 self.model.execute_query("""INSERT INTO invoices(ticket, ticket_price, no_tickets, 
-                tickets_value, date_time) VALUES(%s, %s, %s, %s, %s)""",
-                (ticket_code, ticket_price, ticket_amount, tickets_value, date_time, ))
+                tickets_value, date_time) VALUES('%s', '%s', '%s', '%s', '%s')"""
+                %(ticket_code, ticket_price, ticket_amount, tickets_value, date_time))
 
                 no_invoice = (self.model.fetch_one("SELECT code FROM invoices ORDER BY code DESC")[0])
                 products_price = 0
@@ -102,7 +106,7 @@ class InvoicingController(MethodView):
                     for product in products:
                         product_code = product.get("code")
                         product_amount = product.get("amount")
-                        product_price = self.model.fetch_one("SELECT price FROM products WHERE code = %s", (product_code, )) [0]
+                        product_price = self.model.fetch_one("SELECT price FROM products WHERE code = '%s'" %(product_code)) [0]
                         final_price = product_price * product_amount
 
                         self.model.execute_query(f"""INSERT INTO invoices_details(product_price, no_products, products_value,
@@ -115,13 +119,15 @@ class InvoicingController(MethodView):
                 WHERE code = {no_invoice} """)
 
                 response = make_response(jsonify({
-                    "resposne": {
+                    "response": {
                         "statuscode": 201,
                         "message": "Invoice created successfully",
                         "invoice": no_invoice
                     }
                 }), 201)
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 return make_response(jsonify({
                     "response": {
                         "statusCode": 400,
@@ -160,9 +166,36 @@ class InvoicingController(MethodView):
                         "error": f"{e}"
                     }
                 }))
-
         return response
 
+    """
+        :param code representa el código de la factura a actualizar
+    """
+    def patch(self, code):
+        if request.is_json:
+            status = request.json['status']
+            try:
+                self.model.execute_query("UPDATE invoices SET status = %s WHERE code = %s", (status, code))
+                response = make_response(jsonify({
+                    "response": {
+                        "statusCode": 204,
+                        "message": f"Successfully! Invoice {code} was updated"
+                    }
+                }), 204)
+            except Exception as e:
+                return make_response(jsonify({
+                    "response": {
+                        "statusCode": 400,
+                        "error": f"Exception: {e}"
+                    }
+                }), 400)
+        response = make_response(jsonify({
+            "response": {
+                "statusCode": 400,
+                "error": "Invalid request, only JSON Format"
+            }
+        }), 400)
+        return response
 
 class TicketsControllers(MethodView):
 
@@ -188,34 +221,49 @@ class ProductsControllers(MethodView):
         response = make_response(jsonify({
             "response": {
                 "statuscode": 400,
-                "message": "Send me params with a ticket key"
+                "message": "Send me params with a ticket key"      
             }
         }), 400)
-
-        show_combos = request.args["ticket"]
-
-        if show_combos:
-            
-            try:
-                data = self.model.fetch_all("SELECT * FROM products")
-                message = True
-
-                if show_combos == "CT-01":
-                    message = False
-
-                response = make_response(jsonify({
-                    "response": {
-                        "statuscode": 200,
-                        "message": message,
-                        "data": data,
-                    }
-                }), 200)
-
-            except:
-                response = make_response(jsonify({
-                    "response": {
-                        "statuscode": 406,
-                        "message": "Send me a 'ticket' param"
-                    }
-                }), 406)
+        try:
+            if request.args:
+                show_combos = request.args['ticket']
+                query = "SELECT * FROM ticket WHERE code = '%s'" %(show_combos)
+                print(f"{query=}")
+                tickets = self.model.fetch_one(query)
+                if tickets is None:
+                    return make_response(jsonify({
+                        "response": {
+                            "statusCode": 400,
+                            "error": f"Ticket {show_combos} doesn't exists"
+                        }
+                    }), 400)
+                elif tickets[0] == "CT-01":
+                    disponibility = False
+                    return make_response(jsonify({
+                        "response": {
+                            "statusCode": 400,
+                            "message": "The ticket is unavailable",
+                            "available": disponibility
+                        }
+                    }), 400)
+            data = self.model.fetch_all("SELECT * FROM products")
+            disponibility = True
+            response = make_response(jsonify({
+                "response": {
+                    "statuscode": 200,
+                    "message": "Products are available",
+                    "available": disponibility,
+                    "data": data,
+                }
+            }), 200)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = make_response(jsonify({
+                "response": {
+                    "statuscode": 406,
+                    "message": "Send me a 'ticket' key",
+                    "exception": f"{e}",
+                }
+            }), 406)
         return response

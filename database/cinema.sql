@@ -21,7 +21,8 @@ CREATE TABLE invoices (
     tickets_value FLOAT,
     products_value FLOAT,
     date_time DATETIME,
-    total_value FLOAT
+    total_value FLOAT,
+    status CHAR(1) DEFAULT '1'
 );
 
 CREATE TABLE invoices_details (
