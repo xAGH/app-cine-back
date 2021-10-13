@@ -10,3 +10,9 @@ invoicing_routes = {
     "invoice": "/api/invoicing",
     "invoice_by": "/api/invoicing/<int:id>"
 }
+
+file_routes = {
+    "files_view": FileController.as_view("file"),
+    "upload": "/api/upload",
+    "download": "/api/download"
+}

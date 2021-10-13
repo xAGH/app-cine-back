@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
-from src.routes import routes, invoicing_routes
+from src.routes import routes, invoicing_routes, file_routes
 from src.blueprints import *
 
 class Aplication():
@@ -32,6 +32,7 @@ class Aplication():
         cls.app.add_url_rule(routes["products"], view_func=routes["products_controller"], methods=['GET'])
         cls.app.add_url_rule(invoicing_routes["invoice"], view_func=invoicing_routes["invoice_view"], methods=['GET', 'POST'])
         cls.app.add_url_rule(invoicing_routes["invoice_by"], view_func=invoicing_routes["invoice_view"], methods=['GET', 'PUT', 'PATCH', 'DELETE'])
+        cls.app.add_url_rule(file_routes["upload"], view_func=file_routes["files_view"], methods=['POST'])
     
     @classmethod
     def __register_blueprints(cls):

@@ -1,6 +1,7 @@
 from flask import request, make_response, jsonify
 from flask.views import MethodView
 from src.models import Model
+from src.services import FilesService
 from datetime import datetime
 
 class InvoicingController(MethodView):
@@ -267,3 +268,42 @@ class ProductsControllers(MethodView):
                 }
             }), 406)
         return response
+
+class FileController(MethodView):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.model: Model = Model()
+        self.file_service: FilesService = FilesService()
+
+    def get(self):
+        pass
+
+    def post(self):
+        if request.files:
+            if 'file' not in request.files:
+                return make_response(jsonify({
+                    "response": {
+                        "statusCode": 401,
+                        "error": "No there any file in part"
+                    }
+                }))
+            file = request.files['file']
+            return self.file_service.upload(file)
+            return "Uploading file"
+        response = make_response(jsonify({
+            "response": {
+                "statusCode": 400,
+                "error": "Only multipart/form-data requests"
+            }
+        }), 400)
+        return response
+
+    def patch(self):
+        pass
+
+    def put(self):
+        pass
+
+    def delete(self):
+        pass

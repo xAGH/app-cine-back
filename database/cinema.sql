@@ -1,6 +1,3 @@
-CREATE SCHEMA cinema;
-USE cinema;
-
 CREATE TABLE products (
     code CHAR(5) PRIMARY KEY,
     name VARCHAR(60),
