@@ -92,6 +92,8 @@ class InvoicingController(MethodView):
                 ticket_amount = float(tickets.get("amount"))
                 query = "SELECT price FROM ticket WHERE code = '%s'" %(ticket_code)
                 print(query)
+                result = self.model.fetch_one(query)
+                print(f"{result=}")
                 ticket_price = float(self.model.fetch_one(query)[0])
                 tickets_value = ticket_amount * ticket_price
                 date_time = str(datetime.now())[0:-7]
@@ -203,7 +205,7 @@ class TicketsControllers(MethodView):
         self.model = Model()
 
     def get(self):
-        data = self.model.fetch_all("SELECT * FROM ticket")
+        data = self.model.fetch_all("SELECT * FROM ticket", as_dict=True)
         return make_response(jsonify({
             "response": {
                 "statuscode" : 200,
@@ -228,8 +230,7 @@ class ProductsControllers(MethodView):
             if request.args:
                 show_combos = request.args['ticket']
                 query = "SELECT * FROM ticket WHERE code = '%s'" %(show_combos)
-                print(f"{query=}")
-                tickets = self.model.fetch_one(query)
+                tickets = self.model.fetch_one(query, as_dict=True)
                 if tickets is None:
                     return make_response(jsonify({
                         "response": {
@@ -237,7 +238,7 @@ class ProductsControllers(MethodView):
                             "error": f"Ticket {show_combos} doesn't exists"
                         }
                     }), 400)
-                elif tickets[0] == "CT-01":
+                elif tickets.get('code') == "CT-01":
                     disponibility = False
                     return make_response(jsonify({
                         "response": {
@@ -246,7 +247,7 @@ class ProductsControllers(MethodView):
                             "available": disponibility
                         }
                     }), 400)
-            data = self.model.fetch_all("SELECT * FROM products")
+            data = self.model.fetch_all("SELECT * FROM products", as_dict=True)
             disponibility = True
             response = make_response(jsonify({
                 "response": {
